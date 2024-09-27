@@ -1,38 +1,34 @@
-name: Deploy Swagger UI to GitHub Pages
+name: Deploy document
 
 on:
   push:
     branches:
       - main
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+permissions:
+  id-token: write
+  contents: read
+  actions: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install swagger-cli
-        run: npm install -g swagger-cli
-
-      - name: Generate Swagger UI
-        uses: Legion2/swagger-ui-action@v1
-        with:
-          output: swagger-ui
-          spec-file: docs/afs-client.yaml
-
-      - name: Upload Documents
+      - uses: actions/checkout@v4
+      - name: build documents
+        run: |
+          ./bin/build.sh
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: swagger-ui
+          path: dist
 
   deploy:
-    needs: build
     runs-on: ubuntu-latest
+    needs: build
     permissions:
       pages: write
       id-token: write
@@ -40,5 +36,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deployment
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
