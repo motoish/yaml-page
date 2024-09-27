@@ -1,0 +1,650 @@
+openapi: 3.0.3
+info:
+  title: customer
+  version: 0.0.1
+  description: |
+    customer-api
+
+paths:
+  /tenants/{tenant_id}/csv:
+    parameters:
+      - $ref: '../afs-client.yaml#/components/parameters/TenantId'
+    post:
+      summary: 顧客のチェック用データのCSVファイルを生成する
+      deprecated: true
+      description: |
+        顧客のチェック用データのCSVファイルを生成する。
+      tags:
+        - 顧客情報
+      operationId: post-tenants-tenant-id-csv
+      security:
+        - Tenant/AdvisoryChannel: []
+      responses:
+        '200':
+          description: |
+            リクエスト成功時のレスポンス。
+          content:
+            application/json:
+              schema:
+                type: array
+                description: |
+                  顧客のチェック用データのCSVのリンク先を示すオブジェクト。
+                items:
+                  type: object
+                  required:
+                    - filename
+                    - link
+                  properties:
+                    filename:
+                      type: string
+                      description: |
+                        CSVファイル名。
+                    link:
+                      type: string
+                      format: uri
+                      description: |
+                        CSVファイルのリンク先URL。
+              examples:
+                投資一任管理者ロール向けのレスポンス:
+                  value:
+                    items:
+                      - filename: 'customer.csv'
+                        link: 'https://example.com'
+                      - filename: 'corporation.csv'
+                        link: 'https://example.com'
+                      - filename: 'indivisual-detail.csv'
+                        link: 'https://example.com'
+                      - filename: 'corporation-detail.csv'
+                        link: 'https://example.com'
+                      - filename: 'account.csv'
+                        link: 'https://example.com'
+                      - filename: 'contracted_customer'
+                        link: 'https://example.com'
+                アドバイザー会社管理者ロール向けのレスポンス:
+                  value:
+                    items:
+                      - filename: 'contracted_customer'
+                        link: 'https://example.com'
+
+        '400':
+          $ref: '../afs-client.yaml#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '../afs-client.yaml#/components/responses/TenantNotFoundResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+  /customers/files:
+    post:
+      summary: 顧客のチェック用データのCSVファイルを生成する
+      description: |
+        顧客のチェック用データのCSVファイルを生成する。
+      tags:
+        - 顧客情報
+      operationId: post-customers-files
+      security:
+        - Tenant/AdvisoryChannel: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '../afs-client.yaml#/components/schemas/CustomerCsvCreationRequest'
+
+      responses:
+        '200':
+          description: |
+            リクエスト成功時のレスポンス。
+          content:
+            application/json:
+              schema:
+                type: array
+                description: |
+                  顧客のチェック用データのCSVのリンク先を示すオブジェクト。
+                items:
+                  type: object
+                  required:
+                    - filename
+                    - link
+                  properties:
+                    filename:
+                      type: string
+                      description: |
+                        CSVファイル名。
+                    link:
+                      type: string
+                      format: uri
+                      description: |
+                        CSVファイルのリンク先URL。
+              examples:
+                投資一任管理者ロール向けのレスポンス:
+                  value:
+                    items:
+                      - filename: 'customer.csv'
+                        link: 'https://example.com'
+                      - filename: 'contracted_customer.csv'
+                        link: 'https://example.com'
+                アドバイザー会社管理者ロール向けのレスポンス:
+                  value:
+                    items:
+                      - filename: 'contracted_customer.csv'
+                        link: 'https://example.com'
+
+        '400':
+          $ref: '../afs-client.yaml#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '../afs-client.yaml#/components/responses/TenantNotFoundResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+  /customers/{customer_uuid}:
+    parameters:
+      - $ref: '../afs-client.yaml#/components/parameters/CustomerUuid'
+    get:
+      summary: FAが担当する顧客の詳細。
+      description: |
+        FAが担当する顧客の詳細を返す。
+      tags:
+        - 顧客情報
+      operationId: get-customers-customer-uuid
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+      responses:
+        '200':
+          description: |
+            FAが担当する顧客の詳細。
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/CustomerDetailResponse'
+                  - $ref: '#/components/schemas/CorporateCustomerDetailResponse'
+              examples:
+                新規登録直後の場合(個人顧客):
+                  value:
+                    type: 'personal'
+                    customer_uuid: '21135982-a2a5-41ed-a9a1-17e74a6debb0'
+                    customer_name: '伊藤 睦月'
+                    customer_name_kana: 'イトウ ムツキ'
+                    gender: '1'
+                    birth_date: ''
+                    occupation: ''
+                    account_management_branch_code: ''
+                    specific: ''
+                    account_management_account_no: ''
+                    email: 'mutsuki.ito@example.com'
+                    tel: '09000000000'
+                    zip: '1008111'
+                    pref: '13'
+                    address: '千代田区千代田1-1'
+                    address_kana: 'チヨダクチヨダ1-1'
+                    complete_address: '東京都千代田区千代田1-1'
+                    complete_address_kana: 'トウキョウトチヨダクチヨダ1-1'
+                    family: []
+                    wedding_anniversary: ''
+                    residence: {}
+                    financial_assets: []
+                    income: null
+                    outgo: null
+                    future_expense_income: []
+                    risk_tolerance_date: ''
+                    account_status: '1'
+                    last_contact_date: ''
+                    total_signed_contracts: 0
+                    total_unsigned_contracts: 0
+                    total_end_contracts: 0
+                    has_valid_contract: false
+                    nisa_account: '2'
+                    job: 121
+                    asset_flg: 1
+                    experience_flg: 1
+                    new_nisa_account: '2'
+                    is_display: true
+                    is_potential: true
+                顧客情報入力後の場合(個人顧客):
+                  value:
+                    type: 'personal'
+                    customer_uuid: '21135982-a2a5-41ed-a9a1-17e74a6debb0'
+                    customer_name: '伊藤 睦月'
+                    customer_name_kana: 'イトウ ムツキ'
+                    gender: '1'
+                    birth_date: '1974-06-01T00:00:00.000Z'
+                    occupation: 'office_worker'
+                    account_management_branch_code: '000'
+                    specific: '1'
+                    account_management_account_no: '0000000'
+                    email: 'mutsuki.ito@example.com'
+                    tel: '09000000000'
+                    zip: '1008111'
+                    pref: '13'
+                    address: '千代田区千代田1-1'
+                    address_kana: 'チヨダクチヨダ1-1'
+                    complete_address: '東京都千代田区千代田1-1'
+                    complete_address_kana: 'トウキョウトチヨダクチヨダ1-1'
+                    family:
+                      - name: 伊藤 葉月
+                        name_kana: イトウ ハズキ
+                        relationship: spouse
+                        birth_date: '1975-08-08T00:00:00.000Z'
+                        occupation: office_worker
+                      - name: 伊藤 三日月
+                        name_kana: イトウ ミツキ
+                        relationship: child
+                        birth_date: '2006-04-21T00:00:00.000Z'
+                        occupation: other
+                      - name: 伊藤 月夜野
+                        name_kana: イトウ ツキヨノ
+                        relationship: child
+                        birth_date: '2010-12-16T00:00:00.000Z'
+                        occupation: other
+                    wedding_anniversary: '2002-02-02T00:00:00.000Z'
+                    residence:
+                      type: owned_house
+                      history_years: 10
+                      history_months: 6
+                    financial_assets:
+                      - type: savings_deposit
+                        amounts: 34500000
+                      - type: fixed_deposit
+                        amounts: 9560000
+                      - type: personal_pension
+                        amounts: 24500000
+                    income: 127
+                    outgo: 72
+                    future_expense_income:
+                      - type: income
+                        name: 退職金
+                        year: 2037
+                        month: 6
+                        amounts: 30000000
+                      - type: expense
+                        name: 家のリフォーム
+                        year: 2037
+                        month: 8
+                        amounts: 20000000
+                    risk_tolerance_date: '2021-05-31T00:00:00.000Z'
+                    account_status: '1'
+                    last_contact_date: ''
+                    total_signed_contracts: 0
+                    total_unsigned_contracts: 0
+                    total_end_contracts: 0
+                    electronic_delivery_agreement: '1'
+                    has_valid_contract: true
+                    nisa_account: '2'
+                    job: 121
+                    asset_flg: 1
+                    experience_flg: 1
+                    new_nisa_account: '2'
+                    is_display: true
+                    is_potential: true
+                新規登録直後の場合(法人顧客):
+                  value:
+                    type: 'corporate'
+                    customer_uuid: '21135982-a2a5-41ed-a9a1-17e74a6debb0'
+                    customer_name: 'タナカ製作所株式会社'
+                    customer_name_kana: 'タナカセイサクショカブシキガイシャ'
+                    birth_date: ''
+                    account_status: '1'
+                    specific: ''
+                    account_management_branch_code: ''
+                    account_management_account_no: ''
+                    zip: '1008111'
+                    pref: '13'
+                    address: '千代田区千代田1-1'
+                    address_kana: 'チヨダクチヨダ1-1'
+                    complete_address: '東京都千代田区千代田1-1'
+                    complete_address_kana: 'トウキョウトチヨダクチヨダ1-1'
+                    contact_person_name: ''
+                    contact_person_name_kana: ''
+                    contact_person_department: ''
+                    emails: []
+                    tels:
+                      - '0600000000'
+                    financial_assets: []
+                    risk_tolerance_date: ''
+                    total_signed_contracts: 0
+                    total_unsigned_contracts: 0
+                    total_end_contracts: 0
+                    has_valid_contract: false
+                    job: 121
+                    asset_flg: 1
+                    experience_flg: 1
+                    is_display: true
+                    is_potential: true
+                顧客情報入力後の場合(法人顧客):
+                  value:
+                    type: 'corporate'
+                    customer_uuid: '21135982-a2a5-41ed-a9a1-17e74a6debb0'
+                    customer_name: 'タナカ製作所株式会社'
+                    customer_name_kana: 'タナカセイサクショカブシキガイシャ'
+                    birth_date: '1972-06-01T00:00:00.000Z'
+                    account_status: '1'
+                    specific: '1'
+                    account_management_branch_code: '000'
+                    account_management_account_no: '0000000'
+                    zip: '1008111'
+                    pref: '13'
+                    address: '千代田区千代田1-1'
+                    address_kana: 'チヨダクチヨダ1-1'
+                    complete_address: '東京都千代田区千代田1-1'
+                    complete_address_kana: 'トウキョウトチヨダクチヨダ1-1'
+                    contact_person_name: '斉藤 四郎'
+                    contact_person_name_kana: 'サイトウ シロウ'
+                    contact_person_department: '経理部'
+                    emails:
+                      - 'shiro.saito+1@example.com'
+                      - 'shiro.saito+2@example.com'
+                    tels:
+                      - '0600000000'
+                      - '0900000000'
+                    financial_assets:
+                      - type: savings_deposit
+                        amounts: 34500000
+                      - type: fixed_deposit
+                        amounts: 9560000
+                      - type: personal_pension
+                        amounts: 24500000
+                    risk_tolerance_date: '2021-05-27T00:00:00.000Z'
+                    total_signed_contracts: 0
+                    total_unsigned_contracts: 0
+                    total_end_contracts: 0
+                    electronic_delivery_agreement: '1'
+                    has_valid_contract: true
+                    job: 121
+                    asset_flg: 1
+                    experience_flg: 1
+                    is_display: true
+                    is_potential: true
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '../afs-client.yaml#/components/responses/FaCustomerNotFoundResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+  /customers/files/history:
+    get:
+      parameters:
+        - in: query
+          name: offset
+          description: |
+            指定した数だけ出力するレコードをスキップして、レコードを返却します。
+          schema:
+            type: number
+            default: 0
+            minimum: 0
+          required: false
+        - in: query
+          name: limit
+          description: |
+            指定した数だけレコードを返却します。
+          schema:
+            type: number
+            default: 20
+            minimum: 1
+            maximum: 100
+          required: false
+      summary: CSVファイルダウンロードの証跡を表示する。
+      description: |
+        CSVファイルダウンロードの証跡を表示する。
+      tags:
+        - 顧客情報
+      operationId: get-customers-files-history
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: |
+            CSVファイルダウンロードの証跡を返す。
+          content:
+            application/json:
+              schema:
+                $ref: '../afs-client.yaml#/components/schemas/DownloadCsvHistoryResponse'
+
+        '400':
+          $ref: '../afs-client.yaml#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '../afs-client.yaml#/components/responses/TenantNotFoundResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+  /customers/{customer_uuid}/documents:
+    parameters:
+      - $ref: '../afs-client.yaml#/components/parameters/CustomerUuid'
+    get:
+      parameters:
+        - in: query
+          name: contract_code
+          description: |
+            契約番号。
+          required: true
+          style: form
+          schema:
+            type: string
+      summary: 運用報告書一覧取得。
+      description: |
+        運用報告書一覧取得。
+      tags:
+        - 顧客情報
+      operationId: get-customers-documents
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: |
+            リクエスト成功時のレスポンス。
+          content:
+            application/json:
+              schema:
+                $ref: '../afs-client.yaml#/components/schemas/DocumentPdfResponse'
+  /customers/{customer_uuid}/contract-date:
+    parameters:
+      - $ref: '../afs-client.yaml#/components/parameters/CustomerUuid'
+    get:
+      parameters:
+        - in: query
+          name: contract_code
+          description: |
+            契約番号。
+          required: true
+          style: form
+          schema:
+            type: string
+      summary: 当初契約日、契約日取得。
+      description: |
+        当初契約日、契約日取得。
+      tags:
+        - 顧客情報
+      operationId: get-contract-date
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: |
+            当初契約日、契約日を返す。
+          content:
+            application/json:
+              schema:
+                $ref: '../afs-client.yaml#/components/schemas/ContractDateDetailResponse'
+              examples:
+                当初契約日、契約日はnullの場合:
+                  value: { 'contract_date': null, 'first_contract_date': null }
+                当初契約日、契約日は設定されている場合:
+                  value:
+                    {
+                      'contract_date': '2023-05-18',
+                      'first_contract_date': '2023-04-18',
+                    }
+        '400':
+          $ref: '../afs-client.yaml#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+  /customers/documents:
+    post:
+      summary: 運用報告書ダウンロード。
+      description: |
+        運用報告書ダウンロード。
+      tags:
+        - 顧客情報
+      operationId: get-customers-documents-pdf
+      security:
+        - Bearer: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '../afs-client.yaml#/components/schemas/CustomerDocumentRequest'
+      responses:
+        '200':
+          description: |
+            運用報告書ダウンロード成功時のレスポンス。
+          content:
+            application/json:
+              schema:
+                $ref: '../afs-client.yaml#/components/schemas/DownloadPdfResponse'
+
+        '400':
+          $ref: '../afs-client.yaml#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '../afs-client.yaml#/components/responses/TenantNotFoundResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+
+  /tenants/{tenant_id}/customers/{customer_uuid}/code:
+    parameters:
+      - $ref: '../afs-client.yaml#/components/parameters/CustomerUuid'
+      - $ref: '../afs-client.yaml#/components/parameters/TenantId'
+    get:
+      summary: 顧客番号契約番号取得。
+      description: |
+        customer_uuidより該当顧客番号と契約番号を返す。
+      tags:
+        - 顧客情報
+      operationId: get-customer-code
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+      responses:
+        '200':
+          description: |
+            '顧客番号と契約番号'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer_code:
+                    type: string
+                    example: '0012790'
+                  code_details:
+                    type: array
+                    items:
+                      properties:
+                        goal_id:
+                          type: string
+                          example: '00010eed-4a51-47dd-b843-de2b45215226'
+                        contract_code:
+                          type: string
+                          example: '001'
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '../afs-client.yaml#/components/responses/FaCustomerNotFoundResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+
+  /tenants/{tenant_id}/agent-change:
+    post:
+      summary: 担当者変更。
+      description: |
+        担当者変更。
+      tags:
+        - 顧客情報
+      operationId: post-agent-change
+      security:
+        - Bearer: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '../afs-client.yaml#/components/schemas/AgentChangeRequest'
+      responses:
+        '204':
+          $ref: '../afs-client.yaml#/components/responses/NoContentResponse'
+        '400':
+          $ref: '../afs-client.yaml#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '../afs-client.yaml#/components/responses/TenantNotFoundResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+
+  /customers/{customer_uuid}/nisa:
+    parameters:
+      - $ref: '../afs-client.yaml#/components/parameters/CustomerUuid'
+    get:
+      summary: NISA利用枠情報を返却。
+      description: |
+        NISA利用枠情報取得を返却する。
+      tags:
+        - 顧客情報
+      operationId: get-customers-customer-uuid-nisa
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+
+      responses:
+        '200':
+          description: |
+            NISA利用枠情報。
+          content:
+            application/json:
+              schema:
+                $ref: '../afs-client.yaml#/components/schemas/CustomerNisaResponse'
+        '400':
+          $ref: '../afs-client.yaml#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '../afs-client.yaml#/components/responses/FaCustomerNotFoundResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+components:
+  schemas:
+    CustomerDetailResponse:
+      allOf:
+        - type: object
+          properties:
+            type:
+              type: string
+              example: 'personal'
+              description: '顧客の種類'
+        - $ref: '../afs-client.yaml#/components/schemas/CustomerDetailResponse'
+    CorporateCustomerDetailResponse:
+      allOf:
+        - type: object
+          properties:
+            type:
+              type: string
+              example: 'corporate'
+              description: '顧客の種類'
+        - $ref: '../afs-client.yaml#/components/schemas/CorporateCustomerDetailResponse'

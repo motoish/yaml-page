@@ -1,0 +1,388 @@
+openapi: 3.0.3
+info:
+  title: dashboard-list
+  version: 0.0.1
+  description: |
+    dashboard-list-api
+
+paths:
+  '/fas':
+    get:
+      parameters:
+        - in: query
+          name: offset
+          description: |
+            指定した数だけ出力するレコードをスキップして、レコードが返されます。
+          schema:
+            type: number
+            default: 0
+            minimum: 0
+            maximum: 500
+          required: false
+        - in: query
+          name: limit
+          description: |
+            指定した数だけレコードが返されます。
+          schema:
+            type: number
+            default: 100
+            minimum: 1
+            maximum: 300
+          required: false
+        - in: query
+          name: branch_id
+          schema:
+            allOf:
+              - $ref: '../afs-client.yaml#/components/schemas/BranchId'
+              - default: ''
+                example: ''
+        - in: query
+          name: is_potential_fetched
+          description: |
+            account_statusの取得有無フラグを指定する。
+          schema:
+            type: boolean
+          required: false
+        - in: query
+          name: is_deactivated_this_month
+          description: |
+            今月ログインしていないアドバイザーをフィルターをかけて取得するフラグを指定する。
+          schema:
+            type: boolean
+            default: false
+          required: false
+      summary: アドバイザー会社のFA一覧の取得。
+      description: |
+        アドバイザー会社のFA一覧を取得する。
+      tags:
+        - ダッシュボード / 一覧
+      operationId: get-fa-list
+      security:
+        - Tenant/AdvisoryChannel/Branch: []
+      responses:
+        '200':
+          description: |
+            アドバイザー会社のFA一覧。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FaListResponse'
+              examples:
+                FAが存在しない場合:
+                  value:
+                    fas: []
+                    total_fas: 0
+                    total_summary_customers: 0
+                    total_summary_potential_customers: 0
+                    total_summary_concluded_contracts: 0
+                    have_not_logged_in_this_month: 0
+                    waiting_for_approval_count: 0
+                FAが存在する場合:
+                  value:
+                    fas:
+                      - fa_id: '21135982-a2a5-41ed-a9a1-17e74a6debb0'
+                        fa_name: '田中 太郎'
+                        tenant_id: 'tenant-22-02'
+                        advisory_channel_id: 'a5f6bf08-1fd8-4ec6-8fd2-b3e35a67d9ca'
+                        advisory_channel_name: 'QUICK証券'
+                        branch_id: 'e21d1acb-790c-4c1e-8cb6-2f0528a1d29e'
+                        login_time: '2023-02-05T12:00:00.123Z'
+                        branch_name: '茅場町'
+                        total_customers: 20
+                        potential_customers: 2
+                        concluded_contract_count: 10
+                    total_fas: 1
+                    total_summary_customers: 100
+                    total_summary_potential_customers: 100
+                    total_summary_concluded_contracts: 100
+                    total_goal_amount: 10
+                    have_not_logged_in_this_month: 0
+                    waiting_for_approval_count: 100
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+
+  /tenants/{tenant_id}/customers:
+    get:
+      parameters:
+        - in: query
+          name: offset
+          description: |
+            指定した数だけ出力するレコードをスキップして、レコードが返されます。
+          schema:
+            type: number
+            default: 0
+            minimum: 0
+            maximum: 500
+          required: false
+        - in: query
+          name: limit
+          description: |
+            指定した数だけレコードが返されます。
+          schema:
+            type: number
+            default: 100
+            minimum: 1
+            maximum: 300
+          required: false
+        - in: query
+          name: is_contract_fetched
+          description: |
+            契約情報を取得しますかを指定します。
+          schema:
+            type: boolean
+          required: false
+        - in: query
+          name: contract_class
+          description: |
+            契約区分を指定します。
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: alert_type
+          description: |
+            アラートタイプを指定します。
+          schema:
+            type: string
+            enum:
+              - achievement_probability_danger_zone
+              - nearing_goal
+              - failure_and_unsuccess
+              - nearing_goal_amount
+          required: false
+        - in: query
+          name: is_after_follow_filtered
+          description: |
+            アフターフォロー未実施をフィルターしますかを指定します。
+          schema:
+            type: boolean
+          required: false
+        - in: query
+          name: is_waiting_for_approved
+          description: |
+            承認待ちをフィルターしますかを指定します。
+          schema:
+            type: boolean
+          required: false
+        - in: query
+          name: advisory_channel_id
+          description: |
+            アドバイザー会社のIDを指定します。テナント管理の場合有効
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: branch_id
+          description: |
+            部店のIDを指定します。テナント管理者、アドバイザー会社管理者の場合有効
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: customer_code
+          description: |
+            顧客コードをフィルター条件を指定します。
+          schema:
+            type: string
+          required: false
+      summary: 管理者の顧客詳細取得。
+      description: |
+        tenant_idより該当顧客詳細を返す。
+      tags:
+        - ダッシュボード / 顧客
+      operationId: get-admin-customers
+      security:
+        - Tenant: []
+      responses:
+        '200':
+          description: |
+            '管理者の顧客詳細'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCustomers'
+              examples:
+                存在しない場合:
+                  value:
+                    customers: []
+                    total_customers: 0
+                    alert_and_after_follow_summary:
+                      achievement_probability_danger_zone: 0
+                      nearing_goal: 0
+                      failure_and_unsuccess: 0
+                      after_follow: 1
+                      nearing_goal_amount: 0
+                    waiting_for_approval_count: 0
+                    pullDown: { advisoryChannelList: [], branchList: [] }
+                存在する場合:
+                  value:
+                    customers:
+                      [
+                        {
+                          tenant_id: 'tenant-customers',
+                          advisory_channel_id: 'a5f6bf08-1fd8-4ec6-8fd2-b3e35a67d9ca',
+                          branch_id: 'e21d1acb-790c-4c1e-8cb6-2f0528a1d29e',
+                          fa_id: '5d9bfa3f-c78f-444c-bf62-11c28f7f7518',
+                          customer_uuid: '21135982-a2a5-41ed-a9a1-17e74a6debb0',
+                          customer_type: '2',
+                          occupation: 'office_worker',
+                          advisory_channel_name: 'アドバイザー会社A',
+                          branch_name: '部門A',
+                          fa_name: 'アドバイザーA',
+                          zip: '1008111',
+                          address: '千代田区千代田1-1',
+                          birth_date: '1974-06-01T00:00:00.000Z',
+                          customer_name: '伊藤 睦月',
+                          complete_address: '東京都千代田区千代田1-1',
+                          customer_code: '0012790',
+                          concluded_contract_count: 5,
+                          after_follow_type: 'status_report',
+                          after_follow_status: 'not_done',
+                          has_valid_contract: true,
+                        },
+                        {
+                          tenant_id: 'tenant-customers',
+                          advisory_channel_id: 'a5f6bf08-1fd8-4ec6-8fd2-b3e35a67d9ca',
+                          branch_id: 'e21d1acb-790c-4c1e-8cb6-2f0528a1d29e',
+                          fa_id: '5d9bfa3f-c78f-444c-bf62-11c28f7f7519',
+                          customer_uuid: '21135982-a2a5-41ed-a9a1-17e74a6debb1',
+                          customer_type: '2',
+                          occupation: 'office_worker',
+                          advisory_channel_name: 'アドバイザー会社A',
+                          branch_name: '部門A',
+                          fa_name: 'アドバイザーA',
+                          zip: '1008112',
+                          address: '千代田区千代田1-1',
+                          birth_date: '1974-06-01T00:00:00.000Z',
+                          customer_name: '熊本 テスト',
+                          complete_address: '東京都千代田区千代田1-2',
+                          customer_code: '0012790',
+                          concluded_contract_count: 5,
+                          after_follow_type: 'status_report',
+                          after_follow_status: 'not_done',
+                          has_valid_contract: true,
+                        },
+                      ]
+                    total_customers: 2
+                    alert_and_after_follow_summary:
+                      achievement_probability_danger_zone: 3
+                      nearing_goal: 0
+                      failure_and_unsuccess: 1
+                      after_follow: 1
+                    waiting_for_approval_count: 10
+                    pullDown:
+                      {
+                        advisoryChannelList:
+                          [
+                            {
+                              advisoryChannelId: 'e21d1acb-790c-4c1e-8cb6-2f0528a1d29e',
+                              advisoryChannelName: 'アドバイザー会社１',
+                            },
+                            {
+                              advisoryChannelId: '4291e347-8e04-4856-8195-c9bd907b1b74',
+                              advisoryChannelName: 'アドバイザー会社２',
+                            },
+                          ],
+                        branchList:
+                          [
+                            {
+                              branchId: '8f434849-9687-4760-8fe8-80b927db718a',
+                              branchName: '部店１',
+                            },
+                          ],
+                      }
+
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+
+components:
+  schemas:
+    FaListResponse:
+      type: object
+      required:
+        - fas
+        - total_fas
+      description: |
+        部店のFA一覧オブジェクト。
+      properties:
+        fas:
+          type: array
+          description: |
+            FA一覧。FAがない場合は空配列。
+          items:
+            type: object
+            required:
+              - fa_id
+              - fa_name
+              - tenant_id
+              - advisory_channel_id
+              - branch_id
+              - total_customers
+              - potential_customers
+              - concluded_contract_count
+            properties:
+              fa_id:
+                $ref: '../afs-client.yaml#/components/schemas/FaId'
+              fa_name:
+                $ref: '../afs-client.yaml#/components/schemas/FaName'
+              tenant_id:
+                $ref: '../afs-client.yaml#/components/schemas/TenantId'
+              advisory_channel_id:
+                $ref: '../afs-client.yaml#/components/schemas/AdvisoryChannelId'
+              branch_id:
+                $ref: '../afs-client.yaml#/components/schemas/BranchId'
+        total_fas:
+          type: number
+          description: |
+            FAの総数。
+
+    AdminCustomers:
+      type: object
+      properties:
+        customers:
+          type: array
+          items:
+            type: object
+          properties:
+            tenant_id:
+              $ref: '../afs-client.yaml#/components/schemas/TenantId'
+            advisory_channel_id:
+              $ref: '../afs-client.yaml#/components/schemas/AdvisoryChannelId'
+            branch_id:
+              $ref: '../afs-client.yaml#/components/schemas/BranchId'
+            fa_id:
+              $ref: '../afs-client.yaml#/components/schemas/FaId'
+            customer_uuid:
+              $ref: '../afs-client.yaml#/components/schemas/CustomerUuid'
+            occupation:
+              $ref: '../afs-client.yaml#/components/schemas/Occupation'
+            advisory_channel_name:
+              $ref: '../afs-client.yaml#/components/schemas/AdvisoryChannelName'
+            branch_name:
+              $ref: '../afs-client.yaml#/components/schemas/BranchName'
+            fa_name:
+              $ref: '../afs-client.yaml#/components/schemas/FaName'
+            zip:
+              $ref: '../afs-client.yaml#/components/schemas/Zip'
+            address:
+              $ref: '../afs-client.yaml#/components/schemas/Address'
+            birth_date:
+              $ref: '../afs-client.yaml#/components/schemas/BirthDate'
+            customer_name:
+              $ref: '../afs-client.yaml#/components/schemas/CustomerName'
+            complete_address:
+              $ref: '../afs-client.yaml#/components/schemas/CompleteAddress'
+            customer_code:
+              $ref: '../afs-client.yaml#/components/schemas/CustomerCode'
+        total_customers:
+          type: number
+        alert_and_after_follow_summary:
+          $ref: '../afs-client.yaml#/components/schemas/AlertAndAfterFollowSummary'

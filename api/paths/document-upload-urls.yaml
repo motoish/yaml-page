@@ -1,0 +1,73 @@
+openapi: 3.0.3
+info:
+  title: document-upload-url
+  version: 0.0.1
+  description: |
+    document-upload-url-api
+
+paths:
+  /tenants/{tenant_id}/advisory-channels/{advisory_channel_id}/branches/{branch_id}/fas/{fa_id}/customers/{customer_uuid}/document-upload-urls:
+    parameters:
+      - $ref: '../afs-client.yaml#/components/parameters/TenantId'
+      - $ref: '../afs-client.yaml#/components/parameters/AdvisoryChannelId'
+      - $ref: '../afs-client.yaml#/components/parameters/BranchId'
+      - $ref: '../afs-client.yaml#/components/parameters/FaId'
+      - $ref: '../afs-client.yaml#/components/parameters/CustomerUuid'
+    post:
+      summary: 提案書アップロード用URL作成
+      description: |
+        提案書をアップロードするための署名付きURLを作成する
+      tags:
+        - ゴール
+      operationId: post-advisory-channels-advisory-channel-id-branches-branch-id-fas-fa-id-customers-customer-uuid-document-upload-urls
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - document_type
+                - goal_ids
+              properties:
+                document_type:
+                  allOf:
+                    - $ref: '../../../packages/app/src/modules/constants/snippets/document-types.json'
+                    - type: string
+                      description: |
+                        アップロードするドキュメントの種類
+                      example: 'proposal'
+                goal_ids:
+                  type: array
+                  items:
+                    $ref: '../afs-client.yaml#/components/schemas/GoalId'
+                  example:
+                    - 'd42f4e53-b96f-403c-b295-4f8a70108078'
+                    - 'd68b9f6b-c2ae-2c02-5599-27f8829cb1a8'
+      responses:
+        '201':
+          description: URL作成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - document_upload_url
+                properties:
+                  document_upload_url:
+                    type: string
+                    description: 提案書をアップロードするためのURL
+                    example: https://awsexamplebucket.s3.amazonaws.com/test2.txt?AWSAccessKeyId=AKIAEXAMPLEACCESSKEY&Signature=EXHCcBe%EXAMPLEKnz3r8O0AgEXAMPLE&Expires=1555531131
+                  document_name:
+                    type: string
+                    description: アップロード提案書pdf名
+                    example: 20230822073938854.pdf
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '../afs-client.yaml#/components/responses/FaCustomerGoalAssetManagementPlanNotFoundResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'

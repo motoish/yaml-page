@@ -1,0 +1,677 @@
+openapi: 3.0.3
+info:
+  title: other
+  version: 0.0.1
+  description: |
+    other-api
+
+paths:
+  /record-dates/current:
+    get:
+      summary: 基準日情報を取得する
+      description: |
+        基準日情報を取得する
+      tags:
+        - Others
+      operationId: get-order-dates-current
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+      responses:
+        '200':
+          description: |
+            基準日のレスポンスを返す。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  record_date:
+                    type: string
+                    example: 2022-03-01
+                required:
+                  - record_date
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+
+  /years/{year}/months/{month}/days/{day}:
+    parameters:
+      - in: path
+        name: year
+        description: |
+          年。今年かそれ以上。
+        required: true
+        schema:
+          type: number
+          format: yyyy
+      - in: path
+        name: month
+        description: |
+          月。
+        required: true
+        schema:
+          type: number
+          format: m
+          minimum: 1
+          maximum: 12
+      - in: path
+        name: day
+        description: |
+          日。
+        required: true
+        schema:
+          type: number
+          format: d
+          minimum: 1
+          maximum: 31
+    get:
+      summary: クライアントから渡された日付から休日/六曜を算出
+      description: |
+        クライアントから渡された日付から休日/六曜を算出する。
+      tags:
+        - Others
+      operationId: get-years-year-months-month-days-day
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+      responses:
+        '200':
+          description: |
+            休日/六曜を含むレスポンスを返す。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HolidayAndRokuyoResponse'
+              examples:
+                日付が休日に当てはまる場合:
+                  value:
+                    holiday: '海の日'
+                    rokuyo: '友引'
+                日付が休日に当てはまらない場合:
+                  value:
+                    holiday: ''
+                    rokuyo: '先勝'
+        '400':
+          $ref: '../afs-client.yaml#/components/responses/BadRequestResponse'
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+
+  /tenants/{tenant_id}/advisory-channels/{advisory_channel_id}/branches/{branch_id}/service-name:
+    parameters:
+      - $ref: '../afs-client.yaml#/components/parameters/TenantId'
+      - $ref: '../afs-client.yaml#/components/parameters/AdvisoryChannelId'
+      - $ref: '../afs-client.yaml#/components/parameters/BranchId'
+    get:
+      summary: サービス名を取得する。
+      description: |
+        サービス名を取得する。
+      tags:
+        - Others
+      operationId: get-order-tenants-advisory-channels
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+      responses:
+        '200':
+          description: |
+            サービス名を返す。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service_name:
+                    type: string
+                    example: 'アイザワ'
+                  advisory_channel_name:
+                    type: string
+                    example: 'アドバイザリー会社名'
+                  branch_name:
+                    type: string
+                    example: '部門名'
+                required:
+                  - service_name
+                  - advisory_channel_name
+                  - branch_name
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+
+  '/tenants/{tenant_id}/advisory-channels/{advisory_channel_id}/tenant-setting':
+    parameters:
+      - $ref: ../afs-client.yaml#/components/parameters/TenantId
+      - $ref: ../afs-client.yaml#/components/parameters/AdvisoryChannelId
+    get:
+      summary: テナント固有値を取得する。
+      description: |
+        テナント固有値を返却する。
+      tags:
+        - Others
+      operationId: tenant-setting-detail
+      parameters:
+        - in: query
+          name: select_type
+          required: true
+          description: 設定項目取得タイプ
+          schema:
+            $ref: ../afs-client.yaml#/components/schemas/SelectTypeFilter
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+      responses:
+        '200':
+          description: |
+            テナント固有値を返す。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      tenant_logo:
+                        type: string
+                        example: 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMTA1LjEzIDEwNS4xOCI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOnVybCgjZ3JhZGllbnQtMSk7fTwvc3R5bGU'
+                      tenant_color:
+                        type: string
+                        example: '#F08250'
+                      is_available_nisa:
+                        type: boolean
+                        example: true
+                      available_sign_type:
+                        type: string
+                        example: null
+                      is_risk_level_modify:
+                        type: boolean
+                        example: true
+                      limit_risk_level:
+                        type: number
+                        example: 5
+                      available_plans:
+                        type: object
+                        properties:
+                          deferral:
+                            type: boolean
+                            example: true
+                          reserve:
+                            type: boolean
+                            example: true
+                          deferralWithdrawal:
+                            type: boolean
+                            example: true
+                          reserveDeferralWithdrawal:
+                            type: boolean
+                            example: true
+                      disclaimer:
+                        type: string
+                        example: null
+                      notice:
+                        type: string
+                        example: null
+                      is_customer_list_csv:
+                        type: boolean
+                        example: true
+                      target_customers:
+                        type: object
+                        properties:
+                          personal_customer:
+                            type: boolean
+                            example: true
+                          corporate_customer:
+                            type: boolean
+                            example: false
+                      initial_investment:
+                        type: object
+                        properties:
+                          max:
+                            type: number
+                            example: 99999999000
+                          min:
+                            type: number
+                            example: 1000000
+                          step:
+                            type: number
+                            example: 10000
+                          default:
+                            type: number
+                            example: 0
+                          unit:
+                            type: string
+                            example: 'yen'
+                      initial_investment_reserve:
+                        type: object
+                        properties:
+                          max:
+                            type: number
+                            example: 99999999000
+                          min:
+                            type: number
+                            example: 1000000
+                          step:
+                            type: number
+                            example: 10000
+                          default:
+                            type: number
+                            example: 0
+                          unit:
+                            type: string
+                            example: 'yen'
+                      increased_amount_at_bonus:
+                        type: object
+                        properties:
+                          max:
+                            type: number
+                            example: 99999999000
+                          min:
+                            type: number
+                            example: 1000000
+                          step:
+                            type: number
+                            example: 10000
+                          default:
+                            type: number
+                            example: 0
+                          unit:
+                            type: string
+                            example: 'yen'
+                      fluctuation_funds_amount:
+                        type: object
+                        properties:
+                          max:
+                            type: number
+                            example: 99999999000
+                          min:
+                            type: number
+                            example: 1000000
+                          step:
+                            type: number
+                            example: 10000
+                          default:
+                            type: number
+                            example: 0
+                          unit:
+                            type: string
+                            example: 'yen'
+                      withdrawal_amount:
+                        type: object
+                        properties:
+                          max:
+                            type: number
+                            example: 99999999000
+                          min:
+                            type: number
+                            example: 1000000
+                          step:
+                            type: number
+                            example: 10000
+                          default:
+                            type: number
+                            example: 0
+                          unit:
+                            type: string
+                            example: 'yen'
+                      reserve_monthly_amount:
+                        type: object
+                        properties:
+                          max:
+                            type: number
+                            example: 99999999000
+                          min:
+                            type: number
+                            example: 1000000
+                          step:
+                            type: number
+                            example: 10000
+                          default:
+                            type: number
+                            example: 0
+                          unit:
+                            type: string
+                            example: 'yen'
+                      goal_amount:
+                        type: object
+                        properties:
+                          max:
+                            type: number
+                            example: 99999999000
+                          min:
+                            type: number
+                            example: 1000000
+                          step:
+                            type: number
+                            example: 10000
+                          default:
+                            type: number
+                            example: 0
+                          unit:
+                            type: string
+                            example: 'yen'
+                      goal_amount_slider:
+                        type: object
+                        properties:
+                          max:
+                            type: number
+                            example: 99999999000
+                          min:
+                            type: number
+                            example: 1000000
+                          step:
+                            type: number
+                            example: 10000
+                          default:
+                            type: number
+                            example: 0
+                          unit:
+                            type: string
+                            example: 'yen'
+                      cover_image:
+                        type: string
+                        example: '7fzHA0aIOTEJzLbA5YEGA0iA6mQhIGRAUoR7amiaOoESE6As9s0xk4NLHmZASlZiqSu0mLiwgYFFhl4WleygYPKxe0JBXC46qjuR4EwB2FvBwZXBSGxqYV3qpcy0whHX8BOSBXpaUi/loAAAAASUVORK5CYII='
+                      check_document1:
+                        type: object
+                        properties:
+                          is_used:
+                            type: boolean
+                            example: true
+                          name:
+                            type: string
+                            example: 契約締結前交付書面、約款
+                          document_id:
+                            type: string
+                            example: pre_contract
+                      check_document2:
+                        type: object
+                        properties:
+                          is_used:
+                            type: boolean
+                            example: true
+                          name:
+                            type: string
+                            example: 金融サービス提供法に基づく重要事項説明および同意書
+                          document_id:
+                            type: string
+                            example: consent_form_2
+                      check_document3:
+                        type: object
+                        properties:
+                          is_used:
+                            type: boolean
+                            example: true
+                          name:
+                            type: string
+                            example: お客さま情報の共有同意書
+                          document_id:
+                            type: string
+                            example: consent_form_1
+                      check_document4:
+                        type: object
+                        properties:
+                          is_used:
+                            type: boolean
+                            example: true
+                          name:
+                            type: string
+                            example: 電磁的方法による交付等に関する同意書
+                          document_id:
+                            type: string
+                            example: consent_form_4
+                      check_document5:
+                        type: object
+                        properties:
+                          is_used:
+                            type: boolean
+                            example: true
+                          name:
+                            type: string
+                            example: 投資一任契約に係る契約資産と証券投資信託の信託財産相互間の取引についての同意書
+                          document_id:
+                            type: string
+                            example: consent_form_5
+                      check_document6:
+                        type: object
+                        properties:
+                          is_used:
+                            type: boolean
+                            example: true
+                          name:
+                            type: string
+                            example: 反社会的勢力等でないことの表明・確約に関する同意書
+                          document_id:
+                            type: string
+                            example: consent_form_6
+                      check_document7:
+                        type: object
+                        properties:
+                          is_used:
+                            type: boolean
+                            example: true
+                          name:
+                            type: string
+                            example: 対象ファンドの投資信託説明書（交付目論見書）
+                          document_id:
+                            type: string
+                            example: prospectus
+                      check_document8:
+                        type: object
+                        properties:
+                          is_used:
+                            type: boolean
+                            example: false
+                          name:
+                            type: string
+                            example: null
+                          document_id:
+                            type: string
+                            example: null
+                      check_document9:
+                        type: object
+                        properties:
+                          is_used:
+                            type: boolean
+                            example: false
+                          name:
+                            type: string
+                            example: null
+                          document_id:
+                            type: string
+                            example: null
+                      is_available_fund_source:
+                        type: boolean
+                        example: true
+                      initial_electronic_delivery_agreement:
+                        type: string
+                        example: '1'
+                      monthly_agent_changes:
+                        type: string
+                        example: 'infinity'
+                      is_available_new_nisa:
+                        type: boolean
+                        example: false
+                      goals_plan_cover_image:
+                        type: string
+                        example: '7fzHA0aIOTEJzLbA5YEGA0iA6mQhIGRAUoR7amiaOoESE6As9s0xk4NLHmZASlZiqSu0mLiwgYFFhl4WleygYPKxe0JBXC46qjuR4EwB2FvBwZXBSGxqYV3qpcy0whHX8BOSBXpaUi/loAAAAASUVORK5CYII='
+                      pdf_page_count:
+                        type: object
+                        properties:
+                          introduction:
+                            type: number
+                            example: 3
+                          operation:
+                            type: number
+                            example: 1
+                      is_customer_new_nisa_modified:
+                        type: boolean
+                        example: true
+        '403':
+          $ref: ../afs-client.yaml#/components/responses/ForbiddenResponse
+        '500':
+          $ref: ../afs-client.yaml#/components/responses/InternalServerErrorResponse
+        '503':
+          $ref: ../afs-client.yaml#/components/responses/ServiceUnavailableResponse
+
+  /tenants/{tenant_id}/advisory-channels/{advisory_channel_id}/branches/{branch_id}/advisory-channel-setting:
+    parameters:
+      - $ref: ../afs-client.yaml#/components/parameters/TenantId
+      - $ref: ../afs-client.yaml#/components/parameters/AdvisoryChannelId
+      - $ref: ../afs-client.yaml#/components/parameters/BranchId
+    get:
+      summary: アドバイザー属性を取得する。
+      description: |
+        アドバイザー属性を返却する。
+      tags:
+        - Others
+      operationId: advisory-channel-setting
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+      responses:
+        '200':
+          description: |
+            アドバイザー属性を返す。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      available_advisory_channel_name:
+                        type: string
+                        example: 'true'
+        '403':
+          $ref: ../afs-client.yaml#/components/responses/ForbiddenResponse
+        '500':
+          $ref: ../afs-client.yaml#/components/responses/InternalServerErrorResponse
+        '503':
+          $ref: ../afs-client.yaml#/components/responses/ServiceUnavailableResponse
+
+  /tenants/{tenant_id}/postcode:
+    parameters:
+      - $ref: ../afs-client.yaml#/components/parameters/TenantId
+    get:
+      summary: 郵便番号を取得する。
+      description: |
+        郵便番号を取得する。
+      tags:
+        - Others
+      operationId: get-postcode-detail
+      parameters:
+        - in: query
+          name: post_code
+          required: true
+          description: 郵便番号
+          schema:
+            $ref: ../afs-client.yaml#/components/parameters/PostCode
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+      responses:
+        '200':
+          description: |
+            郵便番号を返す。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: '13106'
+                  prefectures_code:
+                    type: string
+                    example: '13'
+                  prefectures_name:
+                    type: string
+                    example: '東京都'
+                  municipalities_name:
+                    type: string
+                    example: '台東区'
+                  town_area_name:
+                    type: string
+                    example: '三ノ輪'
+                  prefectures_name_kana:
+                    type: string
+                    example: 'トウキョウト'
+                  municipalities_name_kana:
+                    type: string
+                    example: 'タイトウク'
+                  town_area_name_kana:
+                    type: string
+                    example: 'ミノワ'
+                required:
+                  - code
+                  - prefectures_code
+                  - prefectures_name
+                  - municipalities_name
+                  - town_area_name
+                  - prefectures_name_kana
+                  - municipalities_name_kana
+                  - town_area_name_kana
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+
+  /tenants/{tenant_id}/advisory-channels/{advisory_channel_id}/is-standard-plan:
+    parameters:
+      - $ref: '../afs-client.yaml#/components/parameters/TenantId'
+      - $ref: '../afs-client.yaml#/components/parameters/AdvisoryChannelId'
+    get:
+      summary: Standardプランを判定するBoolean値を取得
+      description: |
+        Standardプランを判定するBoolean値を取得する。
+      tags:
+        - Others
+      operationId: get-service-plan-boolean
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+      responses:
+        '200':
+          description: |
+            StandardプランのBoolean値を返す。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_standard_plan:
+                    type: boolean
+                    example: true
+                required:
+                  - is_standard_plan
+
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+
+components:
+  schemas:
+    HolidayAndRokuyoResponse:
+      type: object
+      description: |
+        休日/六曜を含むオブジェクト。
+      required:
+        - holiday
+        - rokuyo
+      properties:
+        holiday:
+          type: string
+          default: '""'
+          description: |
+            日本の休日名 (日本語)。
+        rokuyo:
+          type: string
+          description: |
+            六曜名 (日本語)。

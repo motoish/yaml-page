@@ -1,0 +1,170 @@
+openapi: 3.0.3
+info:
+  title: documents
+  version: 0.0.1
+  description: |
+    documents-api
+
+paths:
+  /tenants/{tenant_id}/advisory-channels/{advisory_channel_id}/branches/{branch_id}/fas/{fa_id}/customers/{customer_uuid}/documents:
+    parameters:
+      - $ref: '../afs-client.yaml#/components/parameters/TenantId'
+      - $ref: '../afs-client.yaml#/components/parameters/AdvisoryChannelId'
+      - $ref: '../afs-client.yaml#/components/parameters/BranchId'
+      - $ref: '../afs-client.yaml#/components/parameters/FaId'
+      - $ref: '../afs-client.yaml#/components/parameters/CustomerUuid'
+    get:
+      parameters:
+        - in: query
+          name: goal_id
+          description: |
+            ゴールIDを指定する。
+          schema:
+            type: string
+          required: false
+      summary: ドキュメント一覧の取得
+      description: |
+        保有するドキュメント一覧を取得する
+      tags:
+        - ゴール
+      operationId: post-advisory-channels-advisory-channel-id-branches-branch-id-fas-fa-id-customers-customer-uuid-goals-goal-id-documents
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+      responses:
+        '200':
+          description: リクエストが成功した場合
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - documents
+                properties:
+                  pdfFileName:
+                    type: string
+                    example: '20240521081825111.pdf'
+                  documents:
+                    items:
+                      type: object
+                      required:
+                        - document_type
+                        - created_at
+                        - document_name
+                      properties:
+                        document_type:
+                          allOf:
+                            - $ref: '../../../packages/app/src/modules/constants/snippets/document-types.json'
+                            - type: string
+                              description: |
+                                ドキュメントの種類
+                              example: 'proposal'
+                        document_name:
+                          type: string
+                          description: ドキュメントの名前(取得に利用)
+                          example: '20220225201718322.pdf'
+                        created_at:
+                          type: string
+                          format: iso8601
+                          description: |
+                            ドキュメントが作成された日。
+                          example: '2022-02-27T17:36:19.508Z'
+
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '../afs-client.yaml#/components/responses/FaCustomerGoalAssetManagementPlanNotFoundResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '../afs-client.yaml#/components/responses/ServiceUnavailableResponse'
+
+  /tenants/{tenant_id}/advisory-channels/{advisory_channel_id}/branches/{branch_id}/fas/{fa_id}/customers/{customer_uuid}/documents/{document_name}:
+    parameters:
+      - $ref: '../afs-client.yaml#/components/parameters/TenantId'
+      - $ref: '../afs-client.yaml#/components/parameters/AdvisoryChannelId'
+      - $ref: '../afs-client.yaml#/components/parameters/BranchId'
+      - $ref: '../afs-client.yaml#/components/parameters/FaId'
+      - $ref: '../afs-client.yaml#/components/parameters/CustomerUuid'
+      - $ref: '../afs-client.yaml#/components/parameters/DocumentName'
+    post:
+      summary: ドキュメントDL用URL作成
+      description: ドキュメントをダウンロードするためのURLを作成します
+      operationId: post-advisory-channels-advisory-channel-id-branches-branch-id-fas-fa-id-customers-customer-uuid-documents-document-name
+      tags:
+        - ゴール
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - document_type
+                - goal_id
+              properties:
+                document_type:
+                  allOf:
+                    - $ref: '../../../packages/app/src/modules/constants/snippets/document-types.json'
+                    - type: string
+                      description: |
+                        ドキュメントの種類
+                      example: 'proposal'
+                goal_id:
+                  allOf:
+                    - type: string
+                      description: |
+                        ゴールID
+                      example: 'eb733b03-4991-5a2b-8806-58ab93695955'
+      responses:
+        '201':
+          description: URL作成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - document_url
+                properties:
+                  document_url:
+                    type: string
+                    description: ドキュメントをダウンロードするためのURL
+                    example: https://awsexamplebucket.s3.amazonaws.com/test2.txt?AWSAccessKeyId=AKIAEXAMPLEACCESSKEY&Signature=EXHCcBe%EXAMPLEKnz3r8O0AgEXAMPLE&Expires=1555531131
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
+
+  /customers/goals/documents/{document_name}:
+    parameters:
+      - $ref: '../afs-client.yaml#/components/parameters/DocumentName'
+    post:
+      summary: MILION のPDFファイルDL
+      description: MILION のPDFファイルをダウンロードします
+      operationId: post-goals-documents-document-name
+      tags:
+        - ゴール
+      security:
+        - Tenant/AdvisoryChannel/Branch/Fa: []
+      responses:
+        '201':
+          description: ドキュメントダウンロード成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  picture:
+                    type: string
+                    example: 'JVBERi0xLjcNJeLjz9MNCjE0MiAwIG9iag08PC9MaW5lYXJpemVkID'
+                  filename:
+                    type: string
+                    example: 'consent_form_1.pdf'
+        '403':
+          $ref: '../afs-client.yaml#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '../afs-client.yaml#/components/responses/FaCustomerGoalAssetManagementPlanNotFoundResponse'
+        '431':
+          $ref: '../afs-client.yaml#/components/responses/FileNotFoundResponse'
+        '500':
+          $ref: '../afs-client.yaml#/components/responses/InternalServerErrorResponse'
